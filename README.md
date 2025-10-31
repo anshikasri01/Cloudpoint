@@ -40,7 +40,5 @@ The app provides more than just basic temperature — including detailed forecas
 | **Deployment** | Render | Cloud hosting platform |
 
 ---
-
-
-git clone https://github.com/your-username/cloudpoint-weather-app.git
+int-weather-app.git
 cd cloudpoint-weather-app
