@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Google Style Weather{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-5xl">
+    <!-- Search Form -->
+    <form method="POST" class="bg-gray-800 p-6 rounded-lg shadow-xl mb-8">
+        <h2 class="text-xl font-semibold mb-4 text-center text-amber-400">Search Weather by City</h2>
+        <div class="flex">
+            <input 
+                type="text" 
+                name="city" 
+                placeholder="Enter city name (e.g., London, Delhi)"
+                class="flex-grow p-3 rounded-l-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                value="{{ city if city else '' }}" 
+                required
+            >
+            <button 
+                type="submit" 
+                class="p-3 bg-amber-600 text-white rounded-r-lg hover:bg-amber-700 transition duration-300"
+            >
+                Search
+            </button>
+        </div>
+    </form>
+
+    <!-- Error Message Display -->
+    {% if error %}
+    <div class="bg-red-600 p-4 rounded-lg shadow-md mb-8">
+        <p class="font-bold">{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Weather Results Display -->
+    {% if weather %}
+    <div class="flex flex-col gap-6">
+
+        <!-- CURRENT WEATHER CARD (Google Style) -->
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-t-4 border-amber-500">
+            <h2 class="text-3xl font-bold mb-1 text-amber-400">{{ weather.name }}, {{ weather.sys.country }}</h2>
+            <p class="text-sm text-gray-400 mb-6">{{ weather.weather[0].description|capitalize }}</p>
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between">
+                
+                <!-- Main Temp and Icon -->
+                <div class="flex items-center mb-4 md:mb-0">
+                    <span class="text-7xl font-light text-white">{{ "%.0f"|format(weather.main.temp) }}°</span>
+                    <!-- Centering the icon better and ensuring the class is applied -->
+                    <div class="flex items-center justify-center w-24 h-24">
+                        <img 
+                            src="http://openweathermap.org/img/wn/{{ weather.weather[0].icon }}@4x.png" 
+                            alt="Weather icon" 
+                            class="w-full h-full weather-icon"
+                            onerror="handleImageError(this)" 
+                        >
+                    </div>
+                </div>
+
+                <!-- Details (Feels Like, Humidity, Wind, Pressure, Sunrise, Sunset, AQI) -->
+                <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-gray-300 text-sm">
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-1">Feels Like: <span class="font-semibold">{{ "%.1f"|format(weather.main.feels_like) }}°C</span></div>
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-1">Humidity: <span class="font-semibold">{{ weather.main.humidity }}%</span></div>
+                    
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-1">Wind: <span class="font-semibold">{{ "%.1f"|format(weather.wind.speed) }} m/s</span></div>
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-1">Pressure: <span class="font-semibold">{{ weather.main.pressure }} hPa</span></div>
+                    
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-1">Sunrise: <span class="font-semibold">{{ time_from_utc(weather.sys.sunrise, weather.timezone) }}</span></div>
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-1">Sunset: <span class="font-semibold">{{ time_from_utc(weather.sys.sunset, weather.timezone) }}</span></div>
+                    
+                    <!-- NEW: Air Quality Index (AQI) -->
+                    {% if air_quality %}
+                    <div class="flex justify-between items-center pb-1 col-span-2">
+                        Air Quality: 
+                        <span class="font-bold text-lg text-amber-300 ml-4">
+                            AQI {{ air_quality.aqi }} 
+                        </span>
+                        <span class="font-bold text-lg">
+                            ({{ air_quality.description }})
+                        </span>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+        <!-- HOURLY FORECAST (NOW) -->
+        {% if hourly_forecast %}
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-t-4 border-gray-700">
+            <h3 class="text-lg font-semibold mb-4 text-amber-400 border-b border-gray-700 pb-2">Hourly Forecast</h3>
+            
+            <div class="flex overflow-x-auto space-x-4 pb-2 custom-scrollbar">
+                {% for hour in hourly_forecast %}
+                <div class="flex-shrink-0 w-24 p-2 text-center rounded-lg {% if loop.index == 1 %}bg-gray-700{% else %}hover:bg-gray-700 transition duration-150{% endif %}">
+                    <p class="text-sm font-semibold">{{ hour.time }}</p>
+                    <img 
+                        src="http://openweathermap.org/img/wn/{{ hour.icon }}@2x.png" 
+                        alt="{{ hour.description }}" 
+                        class="w-12 h-12 mx-auto weather-icon"
+                        onerror="handleImageError(this)"
+                    >
+                    <p class="text-base font-bold text-white">{{ "%.0f"|format(hour.temp) }}°</p>
+                    <p class="text-xs text-amber-300 mt-1">{{ hour.description|truncate(12, True) }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+
+        <!-- 5-DAY DAILY FORECAST -->
+        {% if daily_forecast %}
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-t-4 border-gray-700">
+            <h3 class="text-lg font-semibold mb-4 text-amber-400 border-b border-gray-700 pb-2">5-Day Forecast</h3>
+            
+            <div class="space-y-3">
+                {% for day in daily_forecast %}
+                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition duration-150">
+                    <div class="w-1/4 text-left font-semibold text-white">{{ day.day }}</div>
+                    
+                    <div class="w-1/4 flex items-center justify-center">
+                        <img 
+                            src="http://openweathermap.org/img/wn/{{ day.icon }}@2x.png" 
+                            alt="Weather icon" 
+                            class="w-10 h-10 weather-icon"
+                            onerror="handleImageError(this)"
+                        >
+                    </div>
+
+                    <div class="w-1/4 text-right">
+                        <span class="text-red-400 font-bold">{{ "%.0f"|format(day.max_temp) }}°</span>
+                    </div>
+
+                    <div class="w-1/4 text-right text-gray-400">
+                        <span class="font-semibold">{{ "%.0f"|format(day.min_temp) }}°</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+    {% else %}
+    <p class="text-center text-gray-400 mt-10">Enter a city name above to check the current weather and forecast.</p>
+    {% endif %}
+
+    <!-- Custom CSS for scrollbar (for the hourly forecast section) and icon color enhancement -->
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #4a5568; /* Gray-700 */
+            border-radius: 3px;
+        }
+
+        /* * Apply a yellow filter to the icons. This won't change the color of the PNG 
+         * entirely, but it will enhance the yellow/orange hues for sun icons and
+         * give the entire image a warmer tone, making it visually appealing for sunny weather.
+         */
+        .weather-icon {
+            filter: drop-shadow(0 0 5px rgba(253, 230, 138, 0.5)); /* Amber-200 shadow */
+        }
+    </style>
+
+    <!-- JavaScript to handle image loading errors gracefully -->
+    <script>
+        // This function replaces the broken icon with a fallback cloud icon and prevents further error loops.
+        function handleImageError(img) {
+            // Set the new source for the fallback icon (broken clouds - 04d)
+            img.src = "http://openweathermap.org/img/wn/04d@2x.png";
+            // Remove the onerror attribute to prevent an infinite loop if the fallback also fails to load (though highly unlikely)
+            img.onerror = null;
+        }
+    </script>
+</div>
+{% endblock %}

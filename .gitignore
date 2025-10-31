@@ -1,0 +1,15 @@
+Python
+
+pycache/
+*.pyc
+venv/
+.env
+
+Flask
+
+instance/
+
+API Keys/Secrets
+
+*.key
+*.pem

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CloudPoint Weather{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <header class="bg-gray-800 shadow-md p-4">
+        <div class="container mx-auto">
+            <h1 class="text-2xl font-bold text-teal-400">☁️ CloudPoint Weather</h1>
+        </div>
+    </header>
+    <main class="flex-grow container mx-auto p-4 flex justify-center items-start">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="bg-gray-800 p-4 mt-auto text-center text-gray-500">
+        &copy; CloudPoint Weather App
+    </footer>
+</body>
+</html>
