@@ -171,7 +171,7 @@
         function handleImageError(img) {
             // Set the new source for the fallback icon (broken clouds - 04d)
             img.src = "http://openweathermap.org/img/wn/04d@2x.png";
-            // Remove the onerror attribute to prevent an infinite loop if the fallback also fails to load (though highly unlikely)
+            
             img.onerror = null;
         }
     </script>
