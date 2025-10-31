@@ -40,5 +40,3 @@ The app provides more than just basic temperature — including detailed forecas
 | **Deployment** | Render | Cloud hosting platform |
 
 ---
-int-weather-app.git
-cd cloudpoint-weather-app
